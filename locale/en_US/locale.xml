@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE locale SYSTEM "../../../../../lib/pkp/dtd/locale.dtd">
+
+<!--
+  * @file locale/en_US/locale.xml
+  *
+  * Copyright (c) 2003-2019 Simon Fraser University
+  * Copyright (c) 2003-2019 John Willinsky
+  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+  *
+  * Localization strings.
+  -->
+
+<locale name="en_US" full_name="U.S. English">
+	<message key="plugins.generic.registrationNotification.displayName">Registration Notification Plugin</message>
+	<message key="plugins.generic.registrationNotification.description">Sends an email notification to a configurable list of emails whenever a new user gets registered.</message>
+	<message key="plugins.generic.registrationNotification.description.seeReadme"><![CDATA[Sends an email notification to a configurable list of emails whenever a new user gets registered. <strong>See the README document of this plugin for installation instructions.</strong>]]></message>
+</locale>
