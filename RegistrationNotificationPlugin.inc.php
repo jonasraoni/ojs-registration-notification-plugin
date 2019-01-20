@@ -23,11 +23,10 @@ class RegistrationNotificationPlugin extends GenericPlugin {
 		$isRegistered = parent::register($category, $path, $mainContextId);
 		if ($isRegistered && $this->getEnabled($mainContextId)) {
 			if ($this->isHandlingRegistration() && $this->getRecipientList()) {
-				HookRegistry::register('pkpuserdao::_insertobject', function() {
+				HookRegistry::register('userdao::_insertobject', function() {
 					$this->triggerHook(...func_get_args());
 				});
 			}
-			$this->_registerTemplateResource();
 		}
 		return $isRegistered;
 	}
@@ -144,13 +143,6 @@ class RegistrationNotificationPlugin extends GenericPlugin {
 			];
 		}
 		return $actions;
-	}
-
-	/**
-	 * @copydoc PKPPlugin::getTemplatePath
-	 */
-	public function getTemplatePath($inCore = false) {
-		return $this->getTemplateResourceName() . ':templates/';
 	}
 
 	/**

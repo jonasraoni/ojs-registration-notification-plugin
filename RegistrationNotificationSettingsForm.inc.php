@@ -29,7 +29,7 @@ class RegistrationNotificationSettingsForm extends Form {
 	 * @param $contextId int Context ID
 	 */
 	public function __construct(RegistrationNotificationPlugin $plugin, $contextId) {
-		parent::__construct($plugin->getTemplatePath() . 'settingsForm.tpl');
+		parent::__construct($plugin->getTemplateResource('settingsForm.tpl'));
 		$this->_contextId = $contextId;
 		$this->_plugin = $plugin;
 		$this->addCheck(new FormValidatorPost($this));
