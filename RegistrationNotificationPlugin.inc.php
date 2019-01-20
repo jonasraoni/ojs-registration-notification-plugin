@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2003-2019 Simon Fraser University
  * Copyright (c) 2003-2019 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+ * Distributed under the GNU GPL v3. For full terms see the file LICENSE.
  *
  * @brief registrationNotification plugin
  */
@@ -13,13 +13,7 @@
 import('lib.pkp.classes.plugins.GenericPlugin');
 
 class RegistrationNotificationPlugin extends GenericPlugin {
-	/** @const EMAIL_SEPARATOR The email separator */
-	const EMAIL_SEPARATOR = ',';
-
-	/** @var string The detected username */
-	private $_username = null;
-
-	/** @var array The recipient list */
+	/** @var array Lazy loaded recipient list */
 	private $_recipientList = null;
 
 	/**
@@ -28,8 +22,10 @@ class RegistrationNotificationPlugin extends GenericPlugin {
 	public function register($category, $path, $mainContextId = null) {
 		$isRegistered = parent::register($category, $path, $mainContextId);
 		if ($isRegistered && $this->getEnabled($mainContextId)) {
-			if($this->getRecipientList()) {
-				HookRegistry::register('pkpuserdao::_insertobject', [$this, 'triggerHook']);
+			if ($this->isHandlingRegistration() && $this->getRecipientList()) {
+				HookRegistry::register('pkpuserdao::_insertobject', function() {
+					$this->triggerHook(...func_get_args());
+				});
 			}
 			$this->_registerTemplateResource();
 		}
@@ -37,31 +33,27 @@ class RegistrationNotificationPlugin extends GenericPlugin {
 	}
 
 	/**
-	 * Detects the beginning of a new user registration and subscribes to the method PKPUserDao::getByUsername
+	 * Detects the beginning of a new user registration and registers a shutdown function to send the notification
 	 * @param $hookName string
 	 * @param $args array
 	 * @return bool Always false in order to allow other hooks to be processed
 	 */
-	public function triggerHook($hookName, $args) {
-		if(!empty($args[1][0])) {
-			$this->_username = $args[1][0];
-			HookRegistry::register('pkpuserdao::_getbyusername', [$this, 'commitHook']);
-		}
+	private function triggerHook($hookName, $args) {
+		register_shutdown_function(function($oldPath, $username) {
+			//recover the old working folder since register_shutdown_function doesn't assure it will be the same
+			chdir($oldPath);
+			$this->notify($username);
+		}, getcwd(), $args[1][0]);
 		return false;
 	}
 
 	/**
-	 * Asserts that the detected username matches the one that the application is currently trying to load and sends the notification
-	 * @param $hookName string
-	 * @param $args array
-	 * @return bool Always false in order to allow other hooks to be processed
+	 * Retrieves whether the application is handling a user registration request
+	 * @return bool True if a new registration is being handled
 	 */
-	public function commitHook($hookName, $args) {
-		if(!empty($args[1][0]) && $this->_username === $args[1][0]) {
-			$this->_username = null;
-			$this->notify($args[1][0]);
-		}
-		return false;
+	private function isHandlingRegistration() {
+		$request = Application::getRequest();
+		return $request->isPost() && $request->getRequestedPage() == 'user' && $request->getRequestedOp() == 'register';
 	}
 
 	/**
@@ -69,8 +61,8 @@ class RegistrationNotificationPlugin extends GenericPlugin {
 	 * @return array List of recipients, where key is the email and value is the name
 	 */
 	private function getRecipientList() {
-		if(
-			!is_array($this->_recipientList)
+		if (
+			$this->_recipientList === null
 			&& !is_array($this->_recipientList = $this->getSetting($this->getCurrentContextId(), 'recipientList'))
 		) {
 			$this->_recipientList = [];
@@ -85,7 +77,7 @@ class RegistrationNotificationPlugin extends GenericPlugin {
 	 */
 	private function notify($username) {
 		$userDao = DAORegistry::getDAO('UserDAO');
-		if(!($user = $userDao->getByUsername($username))) {
+		if (!($user = $userDao->getByUsername($username))) {
 			return false;
 		}
 
@@ -110,24 +102,23 @@ class RegistrationNotificationPlugin extends GenericPlugin {
 	 * @copydoc Plugin::manage()
 	 */
 	public function manage($args, $request) {
-		switch ($request->getUserVar('verb')) {
-			case 'settings':
-				AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON, LOCALE_COMPONENT_PKP_MANAGER);
-				$this->import('RegistrationNotificationSettingsForm');
-				$form = new RegistrationNotificationSettingsForm($this, $request->getContext()->getId());
+		if ($request->getUserVar('verb') == 'settings') {
+			AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON, LOCALE_COMPONENT_PKP_MANAGER);
+			$this->import('RegistrationNotificationSettingsForm');
+			$form = new RegistrationNotificationSettingsForm($this, $request->getContext()->getId());
 
-				if ($request->getUserVar('save')) {
-					$form->readInputData();
-					if ($form->validate()) {
-						$form->execute();
-						$notificationManager = new NotificationManager();
-						$notificationManager->createTrivialNotification($request->getUser()->getId());
-						return new JSONMessage(true);
-					}
-				} else {
-					$form->initData();
+			if ($request->getUserVar('save')) {
+				$form->readInputData();
+				if ($form->validate()) {
+					$form->execute();
+					$notificationManager = new NotificationManager();
+					$notificationManager->createTrivialNotification($request->getUser()->getId());
+					return new JSONMessage(true);
 				}
-				return new JSONMessage(true, $form->fetch($request));
+			} else {
+				$form->initData();
+			}
+			return new JSONMessage(true, $form->fetch($request));
 		}
 		return parent::manage($args, $request);
 	}
@@ -138,9 +129,9 @@ class RegistrationNotificationPlugin extends GenericPlugin {
 	public function getActions($request, $verb) {
 		$router = $request->getRouter();
 		import('lib.pkp.classes.linkAction.request.AjaxModal');
-		return array_merge(
-			$this->getEnabled()
-			? [
+		$actions = parent::getActions($request, $verb);
+		if ($this->getEnabled()) {
+			$actions += [
 				new LinkAction(
 					'settings',
 					new AjaxModal(
@@ -150,10 +141,9 @@ class RegistrationNotificationPlugin extends GenericPlugin {
 					__('manager.plugins.settings'),
 					null
 				)
-			]
-			: [],
-			parent::getActions($request, $verb)
-		);
+			];
+		}
+		return $actions;
 	}
 
 	/**
