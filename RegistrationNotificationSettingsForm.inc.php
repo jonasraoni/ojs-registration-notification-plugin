@@ -34,6 +34,11 @@ class RegistrationNotificationSettingsForm extends Form {
 		$this->_plugin = $plugin;
 		$this->addCheck(new FormValidatorPost($this));
 		$this->addCheck(new FormValidatorCSRF($this));
+		import('lib.pkp.classes.validation.ValidatorEmail');
+		$emailValidator = new ValidatorEmail;
+		$this->addCheck(new FormValidatorArrayCustom($this, 'email', 'required', 'form.emailRequired', function ($value) use ($emailValidator) {
+			return $emailValidator->isValid($value);
+		}));
 	}
 
 	/**
@@ -41,7 +46,8 @@ class RegistrationNotificationSettingsForm extends Form {
 	 */
 	public function initData() {
 		$recipientList = $this->_plugin->getSetting($this->_contextId, 'recipientList');
-		$this->setData('recipientList', is_array($recipientList) ? $recipientList : []);
+		$this->setData('email', is_array($recipientList) ? array_keys($recipientList) : []);
+		$this->setData('name', is_array($recipientList) ? array_values($recipientList) : []);
 		return parent::initData();
 	}
 
@@ -50,6 +56,17 @@ class RegistrationNotificationSettingsForm extends Form {
 	 */
 	public function readInputData() {
 		$this->readUserVars(array('email', 'name'));
+		$emails = $this->getData('email');
+		$names = $this->getData('name');
+		foreach($emails as $i => $email) {
+			//clean empty entries
+			if(empty($email) && empty($names[$i])){
+				unset($emails[$i]);
+				unset($names[$i]);
+			}
+		}
+		$this->setData('email', array_values($emails));
+		$this->setData('name', array_values($names));
 		return parent::readInputData();
 	}
 
@@ -65,15 +82,7 @@ class RegistrationNotificationSettingsForm extends Form {
 	 * @copydoc Form::fetch()
 	 */
 	public function execute() {
-		import('lib.pkp.classes.validation.ValidatorEmail');
-
-		$emailValidator = new ValidatorEmail;
-		$data = array_filter(
-			array_combine($this->getData('email'), $this->getData('name')),
-			[$emailValidator, 'isValid'],
-			ARRAY_FILTER_USE_KEY
-		);
-		$this->_plugin->updateSetting($this->_contextId, 'recipientList', $data, 'object');
+		$this->_plugin->updateSetting($this->_contextId, 'recipientList', array_combine($this->getData('email'), $this->getData('name')), 'object');
 		return parent::execute();
 	}
 }

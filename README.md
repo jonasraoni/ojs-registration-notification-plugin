@@ -4,7 +4,7 @@
 Once enabled, the plugin will send an email notification to a configurable list of emails whenever a new user gets registered.
 
 ## Configuration
-Each journal must be configured individually since the settings are not shared.
+Each journal/press must be configured individually since the settings are not shared.
 
 ### Recipients
 The emails must be defined through the plugin settings, the interface supports adding a list of recipients.
