@@ -8,37 +8,14 @@
  * Registration Notification plugin settings
  *
  *}
+<script src="{$pluginJavaScriptURL}/RegistrationNotificationFormHandler.js"></script>
 <script>
 	$(function() {ldelim}
-		function setValidation(container) {ldelim}
-			container.find('[name="email\[\]"]').attr("data-rule-email", "true");
-		{rdelim};
 		// Attach the form handler.
-		setValidation($('#registrationNotificationSettingsForm')
-			.on('click', '.remove-button', function() {ldelim}
-				$(this).parents('.section').remove();
-			{rdelim})
-			.on('click', '.insert-button', function() {ldelim}
-				var section = $(this).parents('.section');
-				var clone = section.clone();
-				section.find('.error').remove();
-				clone.find('[id]').each(function() {ldelim}
-					var 
-						item = $(this), 
-						oldId = item.attr('id'),
-						newId = 'id-' + Math.random().toString(36);
-					item.attr('id', newId);
-					clone.find('[for=' + oldId + ']').attr('for', newId);
-				{rdelim});
-				setValidation(clone);
-				section.find(':input:not(button)').val('');
-				clone.find('.insert-button')
-					.removeClass('insert-button pkp_button_primary')
-					.addClass('remove-button')
-					.text('{translate key="common.remove"}');
-				clone.insertBefore(section);
-			{rdelim})
-			.pkpHandler('$.pkp.controllers.form.AjaxFormHandler'));
+		$('#registrationNotificationSettingsForm').pkpHandler(
+			'$.pkp.controllers.form.registrationNotification.RegistrationNotificationFormHandler', 
+			{ldelim}removeCaption: '{translate key="common.remove"}'{rdelim}
+		);
 	{rdelim});
 </script>
 
@@ -53,13 +30,13 @@
 			{fbvFormArea id="registrationNotificationSettingsFormArea"}
 				{foreach from=$email key=index item=value}
 					{fbvFormSection}
-						{fbvElement type="text" label="email.email" id="email-`$index`" name="email[]" value=$value inline=true size=$fbvStyles.size.SMALL}
+						{fbvElement type="text" data-rule-email="true" label="email.email" id="email-`$index`" name="email[]" value=$value inline=true size=$fbvStyles.size.SMALL}
 						{fbvElement type="text" label="common.name" id="name-`$index`" name="name[]" value=$name[$index] inline=true size=$fbvStyles.size.MEDIUM}
 						{fbvElement type="button" label="common.remove" id="remove-`$index`" inline=true class="default remove-button"}
 					{/fbvFormSection}
 				{/foreach}
 				{fbvFormSection}
-					{fbvElement type="text" label="email.email" id="new-email" name="email[]" inline=true size=$fbvStyles.size.SMALL}
+					{fbvElement type="text" data-rule-email="true" label="email.email" id="new-email" name="email[]" inline=true size=$fbvStyles.size.SMALL}
 					{fbvElement type="text" label="common.name" id="new-name" name="name[]" inline=true size=$fbvStyles.size.MEDIUM}
 					{fbvElement type="button" label="common.more" id="insert" inline=true class="pkp_button_primary default insert-button"}
 				{/fbvFormSection}
