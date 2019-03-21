@@ -14,7 +14,7 @@
 	<application>registrationNotification</application>
 	<type>plugins.generic</type>
 	<release>1.0.0.2</release>
-	<date>2019-02-24</date>
+	<date>2019-03-31</date>
 	<lazy-load>1</lazy-load>
 	<class>RegistrationNotificationPlugin</class>
 </version>
