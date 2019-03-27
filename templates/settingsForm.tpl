@@ -14,7 +14,7 @@
 		// Attach the form handler.
 		$('#registrationNotificationSettingsForm').pkpHandler(
 			'$.pkp.controllers.form.registrationNotification.RegistrationNotificationFormHandler', 
-			{ldelim}removeCaption: '{translate key="common.remove"}'{rdelim}
+			{ldelim}removeCaption: {translate|json_encode key="common.remove"}{rdelim}
 		);
 	{rdelim});
 </script>
