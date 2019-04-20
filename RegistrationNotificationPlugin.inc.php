@@ -187,11 +187,4 @@ class RegistrationNotificationPlugin extends GenericPlugin {
 	public function getInstallSitePluginSettingsFile() {
 		return $this->getPluginPath() . '/settings.xml';
 	}
-
-	/**
-	 * Get the JavaScript URL for this plugin.
-	 */
-	public function getJavaScriptURL($request) {
-		return $request->getBaseUrl() . '/' . $this->getPluginPath() . '/js';
-	}	
 }
