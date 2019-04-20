@@ -74,10 +74,16 @@ class RegistrationNotificationSettingsForm extends Form {
 	 * @copydoc Form::fetch()
 	 */
 	public function fetch($request) {
-		TemplateManager::getManager($request)->assign([
-			'pluginName' => $this->_plugin->getName(),
-			'pluginJavaScriptURL' => $this->_plugin->getJavaScriptURL($request)
-		]);
+		$templateManager = TemplateManager::getManager($request);
+		$templateManager->assign('pluginName', $this->_plugin->getName());
+		$templateManager->addJavaScript(
+			'RegistrationNotificationFormHandler',
+			$request->getBaseUrl() . '/' . $this->_plugin->getPluginPath() . '/js/RegistrationNotificationFormHandler.js',
+			[
+				'priority' => STYLE_SEQUENCE_CORE,
+				'contexts' => 'RegistrationNotificationSettingsForm'
+			]
+		);
 		return parent::fetch($request);
 	}
 

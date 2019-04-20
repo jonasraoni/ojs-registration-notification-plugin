@@ -8,7 +8,7 @@
  * Registration Notification plugin settings
  *
  *}
-<script src="{$pluginJavaScriptURL}/RegistrationNotificationFormHandler.js"></script>
+{load_script context="RegistrationNotificationSettingsForm"}
 <script>
 	$(function() {ldelim}
 		// Attach the form handler.
